@@ -1,5 +1,6 @@
 package Tests;
 
+import com.sun.source.tree.Tree;
 import datastructure.IntSegmentTree;
 import org.junit.jupiter.api.Test;
 
@@ -103,12 +104,67 @@ class IntSegmentTreeTest
         {
             tree.queryInterval(0, 10);
         }
-        catch (ArrayIndexOutOfBoundsException e)
+        catch (IndexOutOfBoundsException e)
         {
             System.out.println("Behavior Expected, passed.");
         }
 
     }
 
+    @Test
+    public void TestUpdatingElementInTree1()
+    {
+        int[] arr = new int[]{1, 2, 3, 4};
+        IntSegmentTree tree = new IntSegmentTree(arr);
+        tree.updateElementAt(0, 10);
+        System.out.println(tree.queryInterval(0, arr.length));
+        System.out.print(Arrays.toString(tree.getTree()));
+        assertTrue(tree.queryInterval(0, arr.length) == 19);
+    }
+
+    @Test
+    public void TestUpdatingElementInTree2()
+    {
+        int[] ReferenceArr = new int[50];
+        for (int II = 0; II < ReferenceArr.length; II++)
+        {
+            ReferenceArr[II] = II + 1;
+        }
+        IntSegmentTree tree = new IntSegmentTree(ReferenceArr);
+        for (int II = 0; II < ReferenceArr.length; II++)
+        {
+            tree.updateElementAt(II, 1);
+            ReferenceArr[II] = 1;
+            TestAllIntervalsSum(tree, ReferenceArr);
+        }
+    }
+
+    /**
+     * Auxilary method for TestUpdatingElement Int tree 2. For all possible interval sum,
+     * check it using a reference array using bruteforce summing.
+     */
+    public static void TestAllIntervalsSum(IntSegmentTree theTree, int[] referenceArray)
+    {
+        for (int II = 0; II < referenceArray.length; II++)
+        {
+            for (int JJ = II + 1; JJ <= referenceArray.length; JJ++)
+            {
+                int TreeSum = theTree.queryInterval(II, JJ);
+                int BruteforceSum = 0;
+                for (int KK = II; KK < JJ; KK++)
+                {
+                    BruteforceSum += referenceArray[KK];
+                }
+                System.out.printf("SegTree: %d; Brutefore: %d\n", TreeSum, BruteforceSum);
+                assertTrue(TreeSum == BruteforceSum);
+            }
+        }
+    }
 
 }
+
+
+
+
+
+

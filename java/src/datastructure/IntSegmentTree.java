@@ -33,8 +33,16 @@ public class IntSegmentTree
     Function<Integer[], Integer> f; // the function that applies recursively to the tree.
 
     // mapping the index of the element in the original array to index of the element in the tree array.
-    protected Map<Integer, Integer> root_node_pos = new HashMap<Integer, Integer>();
+    protected Map<Integer, Integer> leafnode_posi = new HashMap<Integer, Integer>();
 
+    /**
+     * Provide a function and an array of integers to construct the Integer segment tree.
+     * @param argin
+     * The integer array we want to construct the segment tree on.
+     * @param f
+     * A function that accepts 2 integers, and it can compute for an array of element correctly using divide
+     * and conquer.
+     */
     public IntSegmentTree(int[] argin, Function<Integer[], Integer> f)
     {
         if (argin.length == 0) throw new RuntimeException("Array cannot be empty.");
@@ -55,27 +63,42 @@ public class IntSegmentTree
      * @param b The right boundary index of the interval, exclusive.
      * @return
      * The return value of the function applied on that interval.
+     * @exception IndexOutOfBoundsException
+     * Happens when the interval given has boundary that is larger than the range of the array.
+     * @exception RuntimeException
+     * Triggered by defected/singleton interval.
      */
     public int queryInterval(int a, int b)
     {
-        if (a < 0 || a >= array_length) throw new IndexOutOfBoundsException("Index out ");
+        if (a < 0 || b > array_length) throw new IndexOutOfBoundsException();
+        if (a >= b) throw new RuntimeException("Defected interval nto allowed.");
         return queryInterval(1, new MyInterval(0, array_length), new MyInterval(a, b));
     }
 
-    public void updateElementAt(int index)
+    /**
+     * Choose an element in the array and update them.
+     * @param index
+     *  The index of the element in the array.
+     * @param value
+     *  The new value for that element.
+     */
+    public void updateElementAt(int index, int value)
     {
         if (index < 0 || index >= farr.length) throw new ArrayIndexOutOfBoundsException();
         /*
             1. starts at the root node of that singleton interval for the index.
             2. update its parent from bottom to the top.
          */
-        int Node = root_node_pos.get(index + 1);
-        throw new RuntimeException("Not yet implemented.");
-        /*while (Node != 1)
+        int Node = leafnode_posi.get(index);
+        farr[Node] = value;
+        while (Node != 1)
         {
-
-        }*/
-
+            int ParentNode = getParent(Node);
+            int LeftChildNode = getLeftChild(ParentNode);
+            int RightChildNode = getRightChild(ParentNode);
+            farr[ParentNode] = f.apply(new Integer[]{farr[LeftChildNode], farr[RightChildNode]});
+            Node = ParentNode;
+        }
     }
 
     protected int queryInterval(int node, MyInterval nodeInterval, MyInterval queryInterval)
@@ -131,17 +154,19 @@ public class IntSegmentTree
         if (interval.a + 1 >= interval.b)
         {
             farr[node] = array[interval.a];
-            root_node_pos.put(interval.a, node);
+            leafnode_posi.put(interval.a, node);
             return;
         }
 
         int LeftChildIndex = getLeftChild(node), RightChildIndex = getRightChild(node);
         construct (LeftChildIndex, interval.splitLeft(), array);
         construct (RightChildIndex, interval.splitRight(), array);
-        farr[node] = f.apply(new Integer[]{
-                                            farr[LeftChildIndex],
-                                            farr[RightChildIndex]}
-                                            );
+        farr[node] = f.apply(new Integer[]
+                                {
+                                    farr[LeftChildIndex],
+                                    farr[RightChildIndex]
+                                }
+                            );
     }
 
     public int[] getTree()
